@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ôn Tập Vectơ - SAT Style</title>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <style>
+        :root {
+            --primary: #6366f1; --primary-dark: #4f46e5; --primary-light: #eef2ff;
+            --secondary: #8b5cf6; --success: #10b981; --success-light: #d1fae5;
+            --error: #ef4444; --error-light: #fee2e2; --warning: #f59e0b; --warning-light: #fef3c7;
+            --bg: #f8fafc; --surface: #ffffff; --text-main: #0f172a; --text-muted: #64748b;
+            --border: #e2e8f0; --border-strong: #cbd5e1;
+            --radius: 14px; --radius-sm: 10px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 25px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --gradient-soft: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+            --gradient-ai: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+        body { background: var(--bg); color: var(--text-main); display: flex; min-height: 100vh; line-height: 1.6; }
+
+        .sidebar {
+            width: 260px; background: var(--surface); border-right: 1px solid var(--border);
+            padding: 24px 0 0; position: fixed; height: 100vh; overflow-y: auto;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.03); z-index: 10;
+            display: flex; flex-direction: column;
+        }
+        .logo {
+            font-size: 22px; font-weight: 800; padding: 0 24px 24px; border-bottom: 1px solid var(--border);
+            margin-bottom: 20px; background: var(--gradient); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .logo::before { content: '→'; font-size: 28px; -webkit-text-fill-color: var(--primary); background: none; }
+        .nav-btn {
+            display: flex; align-items: center; gap: 12px; width: calc(100% - 24px);
+            margin: 4px 12px; padding: 12px 16px; text-align: left; background: none;
+            border: none; border-radius: var(--radius-sm); font-size: 14.5px; font-weight: 500;
+            color: var(--text-muted); cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-btn:hover { background: var(--primary-light); color: var(--primary-dark); transform: translateX(2px); }
+        .nav-btn.active { background: var(--gradient); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35); }
+        .nav-btn.ai-settings { margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; color: var(--secondary); }
+
+        /* ===== SIDEBAR CREDIT ===== */
+        .sidebar-nav { flex: 1; overflow-y: auto; padding-bottom: 12px; }
+        .sidebar-credit {
+            padding: 14px 18px;
+            border-top: 1px solid var(--border);
+            background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+            text-align: center; line-height: 1.55; color: var(--text-muted);
+        }
+        .sidebar-credit .credit-label {
+            font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.6px;
+            opacity: 0.85; margin-bottom: 3px; font-weight: 600;
+        }
+        .sidebar-credit .credit-name {
+            font-size: 13px; font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; letter-spacing: -0.2px;
+        }
+        .sidebar-credit .credit-school { font-size: 11px; font-weight: 600; color: var(--primary-dark); }
+        .sidebar-credit .credit-phone {
+            font-size: 11px; margin-top: 4px; color: var(--secondary); font-weight: 600;
+            display: inline-block; padding: 2px 8px; background: rgba(139,92,246,0.1);
+            border-radius: 6px;
+        }
+
+        .main-content { margin-left: 260px; flex: 1; padding: 40px 48px; max-width: 1080px; width: calc(100% - 260px); }
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        h1 { font-size: 28px; font-weight: 800; margin-bottom: 24px; color: var(--text-main); letter-spacing: -0.5px; }
+        h2 { font-size: 22px; font-weight: 700; margin-bottom: 14px; color: var(--primary-dark); }
+        h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
+
+        .theory-card {
+            background: var(--surface); padding: 24px 28px; border-radius: var(--radius);
+            box-shadow: var(--shadow); margin-bottom: 20px; border-left: 5px solid var(--primary);
+            transition: all 0.3s;
+        }
+        .theory-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+        .theory-card ul { margin-left: 20px; margin-top: 12px; line-height: 1.8; }
+        .theory-card li { margin-bottom: 10px; }
+        .theory-card strong { color: var(--primary-dark); }
+
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+        .progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 24px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); }
+        .progress-fill { height: 100%; background: var(--gradient); width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 4px; }
+
+        .question-box {
+            background: var(--surface); padding: 32px; border-radius: var(--radius);
+            box-shadow: var(--shadow); margin-bottom: 20px; font-size: 16px; line-height: 1.7;
+            border: 1px solid var(--border);
+        }
+        .q-badge {
+            display: inline-block; background: var(--primary-light); color: var(--primary-dark);
+            padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 13px;
+            margin-bottom: 16px; letter-spacing: 0.3px;
+        }
+        .options-list { display: grid; gap: 12px; margin-top: 22px; }
+        .option-btn {
+            padding: 16px 20px; background: var(--surface); border: 2px solid var(--border);
+            border-radius: var(--radius-sm); text-align: left; font-size: 15.5px; color: var(--text-main);
+            cursor: pointer; transition: all 0.2s; font-weight: 500;
+        }
+        .option-btn:hover:not([style*="pointer-events: none"]) { border-color: var(--primary); background: var(--primary-light); transform: translateX(3px); }
+        .option-btn.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); font-weight: 700; }
+        .option-btn.correct { border-color: var(--success); background: var(--success-light); color: #065f46; font-weight: 700; }
+        .option-btn.wrong { border-color: var(--error); background: var(--error-light); color: #991b1b; }
+
+        .hint-container { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+        .btn {
+            padding: 11px 20px; border-radius: var(--radius-sm); border: none;
+            font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px; font-family: inherit;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--gradient); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+        .btn-primary:hover { box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4); }
+        .btn-outline { background: var(--surface); border: 1.5px solid var(--border-strong); color: var(--text-main); }
+        .btn-outline:hover { background: var(--bg); border-color: var(--primary); }
+        .btn-warning { background: var(--warning-light); color: #92400e; border: 1.5px solid #fde68a; }
+        .btn-warning:hover { background: #fde68a; }
+        .btn-thinking { background: #dbeafe; color: #1e40af; border: 1.5px solid #bfdbfe; }
+        .btn-thinking:hover { background: #bfdbfe; }
+        .btn-ai { background: var(--gradient-ai); color: white; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); }
+        .btn-ai:hover { box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4); }
+
+        .hint-text, .thinking-text {
+            display: none; background: var(--warning-light); padding: 16px 20px;
+            border-radius: var(--radius-sm); margin-top: 12px; border-left: 4px solid var(--warning);
+            font-size: 14.5px; line-height: 1.7; animation: fadeIn 0.3s ease;
+        }
+        .thinking-text { background: #dbeafe; border-left-color: #3b82f6; }
+        .ai-response {
+            display: none; background: linear-gradient(135deg, #faf5ff 0%, #fdf2f8 100%);
+            padding: 18px 22px; border-radius: var(--radius-sm); margin-top: 16px;
+            border-left: 4px solid var(--secondary); font-size: 14.5px; line-height: 1.7;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .exam-timer {
+            font-size: 22px; font-weight: 800; color: white;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            padding: 8px 20px; border-radius: 30px; box-shadow: 0 4px 16px rgba(239, 68, 68, 0.35);
+            font-variant-numeric: tabular-nums; letter-spacing: 1px; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        .exam-timer.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+        .exam-part-header {
+            background: var(--gradient); color: white; padding: 16px 24px;
+            border-radius: var(--radius); margin: 32px 0 20px; font-size: 17px; font-weight: 700;
+            box-shadow: var(--shadow); display: flex; align-items: center; gap: 12px;
+        }
+        .exam-part-header:first-child { margin-top: 0; }
+        .exam-part-header .num { background: rgba(255,255,255,0.25); padding: 4px 12px; border-radius: 20px; font-size: 14px; }
+
+        .tf-row {
+            margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg); padding: 14px 18px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); gap: 16px; flex-wrap: wrap;
+        }
+        .tf-row > span:first-child { flex: 1; min-width: 200px; }
+        .tf-options { display: flex; gap: 14px; white-space: nowrap; }
+        .tf-options label {
+            display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+            font-size: 14px; font-weight: 500; padding: 6px 12px; border-radius: 8px; transition: all 0.2s;
+        }
+        .tf-options label:hover { background: white; }
+        .tf-options input[type="radio"] { accent-color: var(--primary); cursor: pointer; }
+
+        .short-input {
+            margin-top: 16px; padding: 12px 18px; width: 100%; max-width: 360px;
+            border: 2px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 15px; font-family: inherit; transition: all 0.2s;
+        }
+        .short-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+        .question-nav {
+            display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px;
+            background: var(--surface); padding: 16px; border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+        }
+        .q-nav-btn {
+            width: 42px; height: 42px; border-radius: 12px; border: 2px solid var(--border);
+            background: white; cursor: pointer; font-weight: 700; font-size: 14px;
+            color: var(--text-muted); transition: all 0.2s;
+        }
+        .q-nav-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
+        .q-nav-btn.answered { background: var(--gradient); color: white; border-color: transparent; box-shadow: 0 3px 8px rgba(99, 102, 241, 0.3); }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); z-index: 1000; justify-content: center;
+            align-items: center; backdrop-filter: blur(4px);
+        }
+        .modal {
+            background: white; padding: 32px; border-radius: var(--radius);
+            max-width: 540px; width: 90%; box-shadow: var(--shadow-lg); animation: fadeIn 0.3s ease;
+        }
+        .modal h3 { margin-bottom: 16px; font-size: 20px; }
+        .modal input[type="text"] {
+            width: 100%; padding: 12px 16px; margin: 12px 0 20px;
+            border: 2px solid var(--border); border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 14px;
+        }
+        .modal input[type="text"]:focus { outline: none; border-color: var(--primary); }
+        .close-modal { float: right; cursor: pointer; font-size: 24px; font-weight: 700; color: var(--text-muted); line-height: 1; transition: color 0.2s; }
+        .close-modal:hover { color: var(--error); }
+
+        .spinner {
+            border: 3px solid #f3f3f3; border-top: 3px solid var(--secondary);
+            border-radius: 50%; width: 20px; height: 20px;
+            animation: spin 0.9s linear infinite; display: none; margin-top: 10px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .result-box {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            padding: 40px; border-radius: var(--radius); text-align: center;
+            box-shadow: var(--shadow); border: 2px solid #bbf7d0;
+        }
+        .result-score {
+            font-size: 56px; font-weight: 900; background: var(--gradient);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; margin: 20px 0;
+        }
+
+        /* ===== PAGE FOOTER ===== */
+        .page-footer {
+            margin-top: 60px; padding: 24px 20px; text-align: center;
+            font-size: 13px; color: var(--text-muted);
+            border-top: 1px solid var(--border); line-height: 1.8;
+        }
+        .page-footer strong { color: var(--primary-dark); }
+        .page-footer .footer-heart {
+            display: inline-block; margin: 0 4px;
+            background: var(--gradient); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar { width: 100%; height: auto; position: static; padding: 16px; display: block; }
+            .sidebar-nav { overflow-y: visible; padding-bottom: 0; }
+            .sidebar-credit { margin-top: 16px; border-radius: 10px; }
+            .main-content { margin-left: 0; width: 100%; padding: 20px; }
+            body { flex-direction: column; }
+            .nav-btn { font-size: 14px; padding: 10px 14px; }
+            h1 { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="logo">Vectơ Master</div>
+        <div class="sidebar-nav">
+            <button class="nav-btn active" onclick="switchTab('theory', this)">📖 Lý thuyết cơ bản</button>
+            <button class="nav-btn" onclick="switchTab('quick-quiz', this)">⚡ Trắc nghiệm nhanh</button>
+            <button class="nav-btn" onclick="switchTab('exam-mode', this)">📝 Đề thi chuẩn MOET</button>
+            <button class="nav-btn ai-settings" onclick="openModal()">⚙️ Cài đặt Gemini API</button>
+        </div>
+        <div class="sidebar-credit">
+            <div class="credit-label">✍️ Thiết kế bởi</div>
+            <div class="credit-name">Thầy Nguyễn Hữu Trung</div>
+            <div class="credit-school">THPT Trần Phú</div>
+            <div class="credit-phone">📞 0964 848 989</div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+
+        <section id="theory" class="section active">
+            <h1>📚 Lý Thuyết Vectơ Trọng Tâm</h1>
+
+            <div class="theory-card">
+                <h3>1. Khái niệm Vectơ</h3>
+                <ul>
+                    <li><strong>Định nghĩa:</strong> Vectơ là đoạn thẳng có hướng. Kí hiệu \(\vec{AB}\) (A là điểm đầu, B là điểm cuối) hoặc \(\vec{a}, \vec{b}\).</li>
+                    <li><strong>Độ dài:</strong> \(|\vec{AB}| = AB\). Vectơ-không \(\vec{0}\) có độ dài bằng 0.</li>
+                    <li><strong>Hai vectơ cùng phương</strong> nếu giá của chúng song song hoặc trùng nhau. Cùng hướng, ngược hướng.</li>
+                    <li><strong>Hai vectơ bằng nhau:</strong> Cùng hướng và cùng độ dài.</li>
+                    <li><strong>Vectơ đối:</strong> \(\vec{a}\) và \(-\vec{a}\) cùng độ dài, ngược hướng. Ta có \(\vec{BA} = -\vec{AB}\).</li>
+                </ul>
+            </div>
+
+            <div class="theory-card">
+                <h3>2. Tổng và Hiệu của hai Vectơ</h3>
+                <ul>
+                    <li><strong>Quy tắc ba điểm:</strong> \(\vec{AB} + \vec{BC} = \vec{AC}\).</li>
+                    <li><strong>Quy tắc hình bình hành:</strong> Nếu ABCD là hình bình hành thì \(\vec{AB} + \vec{AD} = \vec{AC}\).</li>
+                    <li><strong>Quy tắc hiệu:</strong> \(\vec{OA} - \vec{OB} = \vec{BA}\).</li>
+                    <li><strong>Tính chất:</strong> Giao hoán, kết hợp, cộng với \(\vec{0}\), cộng với vectơ đối.</li>
+                </ul>
+            </div>
+
+            <div class="theory-card">
+                <h3>3. Tích của một Vectơ với một số</h3>
+                <ul>
+                    <li><strong>Định nghĩa:</strong> \(k\vec{a}\) cùng hướng với \(\vec{a}\) nếu \(k>0\), ngược hướng nếu \(k<0\). Độ dài \(|k\vec{a}| = |k|.|\vec{a}|\).</li>
+                    <li><strong>Tính chất:</strong> \(k(\vec{a} + \vec{b}) = k\vec{a} + k\vec{b}\); \(1\vec{a} = \vec{a}\); \((-1)\vec{a} = -\vec{a}\).</li>
+                    <li><strong>Trung điểm & Trọng tâm:</strong>
+                        <br>I là trung điểm AB \(\Leftrightarrow \vec{IA} + \vec{IB} = \vec{0} \Leftrightarrow \vec{MA} + \vec{MB} = 2\vec{MI}\).
+                        <br>G là trọng tâm \(\Delta ABC \Leftrightarrow \vec{GA} + \vec{GB} + \vec{GC} = \vec{0} \Leftrightarrow \vec{MA} + \vec{MB} + \vec{MC} = 3\vec{MG}\).
+                    </li>
+                    <li><strong>Phân tích vectơ:</strong> Cho hai vectơ \(\vec{u}, \vec{v}\) không cùng phương, mọi vectơ \(\vec{w}\) đều viết được duy nhất dưới dạng \(\vec{w} = x\vec{u} + y\vec{v}\).</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="quick-quiz" class="section">
+            <div class="quiz-header">
+                <h1>⚡ Trắc nghiệm nhanh</h1>
+                <select id="quick-quiz-group" class="btn btn-outline" onchange="loadQuickQuiz(this.value)">
+                    <option value="0">Nhóm 1: Cơ bản (Dễ)</option>
+                    <option value="1">Nhóm 2: Trung bình</option>
+                    <option value="2">Nhóm 3: Nâng cao (Khó)</option>
+                </select>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="quick-progress"></div></div>
+            <div id="quick-quiz-container"></div>
+        </section>
+
+        <section id="exam-mode" class="section">
+            <div class="quiz-header">
+                <h1>📝 Đề thi thử THPT Quốc Gia</h1>
+                <select id="exam-group" class="btn btn-outline" onchange="loadExam(this.value)">
+                    <option value="0">Đề số 1 (22 câu)</option>
+                    <option value="1">Đề số 2 (22 câu)</option>
+                    <option value="2">Đề số 3 (22 câu)</option>
+                </select>
+                <div class="exam-timer" id="exam-timer">90:00</div>
+            </div>
+            <div id="exam-container"></div>
+            <div class="question-nav" id="exam-nav"></div>
+            <br>
+            <button class="btn btn-primary" onclick="submitExam()" style="font-size: 16px; padding: 14px 28px;">✅ Nộp bài</button>
+        </section>
+
+        <footer class="page-footer">
+            <p><span class="footer-heart">✨ Vectơ Master ✨</span></p>
+            <p>Thiết kế bởi <strong>Thầy Nguyễn Hữu Trung</strong> · <strong>THPT Trần Phú</strong></p>
+            <p>📞 <strong>0964 848 989</strong> · Chúc các em học tốt!</p>
+        </footer>
+
+    </main>
+
+    <div class="modal-overlay" id="apiModal">
+        <div class="modal">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h3>🔑 Cài đặt API Key Gemini</h3>
+            <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
+                Để sử dụng tính năng "Hỏi AI Gemini", bạn cần một API Key miễn phí từ Google.
+            </p>
+            <ol style="margin-left: 20px; font-size: 14px; line-height: 1.8; margin-bottom: 16px;">
+                <li>Truy cập <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary); font-weight: 600;">Google AI Studio</a>.</li>
+                <li>Đăng nhập bằng tài khoản Google.</li>
+                <li>Nhấn nút <strong>"Create API key"</strong>.</li>
+                <li>Sao chép đoạn mã và dán vào ô dưới đây.</li>
+            </ol>
+            <input type="text" id="apiKeyInput" placeholder="Dán API Key tại đây...">
+            <button class="btn btn-primary" onclick="saveApiKey()">Lưu API Key</button>
+            <p id="api-status" style="font-size: 13px; margin-top: 10px; color: var(--success); display: none;">✅ Đã lưu API Key thành công!</p>
+        </div>
+    </div>
+
+    <script>
+        let geminiApiKey = localStorage.getItem('geminiApiKey') || '';
+        function renderMath() { if (window.MathJax) MathJax.typesetPromise(); }
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if (btn) btn.classList.add('active');
+            renderMath();
+        }
+
+        function openModal() { document.getElementById('apiModal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('apiModal').style.display = 'none'; }
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (key) {
+                localStorage.setItem('geminiApiKey', key);
+                geminiApiKey = key;
+                document.getElementById('api-status').style.display = 'block';
+                setTimeout(closeModal, 1500);
+            }
+        }
+
+        // ========== QUICK QUIZ DATA ==========
+        const quickQuizData = [
+            [
+                { q: "Vectơ là gì?", options: ["Một đoạn thẳng", "Một đoạn thẳng có hướng", "Một đường thẳng", "Một điểm"], answer: 1, hints: ["Vectơ khác đoạn thẳng ở chỗ nào?", "Nó có điểm đầu và điểm cuối phân biệt."], thinking: "Nếu hai người đi từ A đến B và từ B đến A, quãng đường giống nhau nhưng hướng di chuyển khác nhau. Điều này liên hệ gì tới khái niệm vectơ?" },
+                { q: "Hai vectơ được gọi là bằng nhau khi nào?", options: ["Cùng độ dài", "Cùng phương", "Cùng hướng và cùng độ dài", "Có giá song song"], answer: 2, hints: ["Cần thỏa mãn 2 điều kiện.", "Một điều kiện về hướng, một về độ dài."], thinking: "Hai vectơ cùng độ dài nhưng ngược hướng có bằng nhau không? Vì sao?" },
+                { q: "Cho 3 điểm A, B, C bất kì. Đẳng thức nào sau đây đúng?", options: ["\\(\\vec{AB} + \\vec{BC} = \\vec{AC}\\)", "\\(\\vec{AB} + \\vec{AC} = \\vec{BC}\\)", "\\(\\vec{AB} - \\vec{BC} = \\vec{AC}\\)", "\\(\\vec{AC} + \\vec{CB} = \\vec{AB}\\)"], answer: 0, hints: ["Đây là quy tắc ba điểm.", "Điểm cuối của vectơ thứ nhất trùng điểm đầu của vectơ thứ hai."], thinking: "Nếu đi từ A đến B rồi từ B đến C, tổng quãng đường vectơ có phải là đi thẳng từ A đến C không?" },
+                { q: "Vectơ đối của \\(\\vec{a}\\) là:", options: ["Vectơ cùng hướng, cùng độ dài", "Vectơ ngược hướng, cùng độ dài", "Vectơ ngược hướng, khác độ dài", "Vectơ-không"], answer: 1, hints: ["Kí hiệu là \\(-\\vec{a}\\).", "Độ dài giữ nguyên, hướng ngược lại."], thinking: "Tổng của một vectơ và vectơ đối của nó bằng gì? Điều này có ý nghĩa gì hình học?" },
+                { q: "Độ dài của vectơ \\(\\vec{AB}\\) được kí hiệu là:", options: ["AB", "\\(|\\vec{AB}|\\)", "Cả A và B đều đúng", "BA"], answer: 2, hints: ["Liên quan đến độ dài đoạn thẳng.", "Kí hiệu toán học có dấu giá trị tuyệt đối."], thinking: "Vì sao độ dài vectơ luôn là một số không âm? Điều này có giống với giá trị tuyệt đối của số thực không?" },
+                { q: "Trong hình bình hành ABCD, ta có:", options: ["\\(\\vec{AB} = \\vec{CD}\\)", "\\(\\vec{AB} = \\vec{DC}\\)", "\\(\\vec{AB} = -\\vec{DC}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{BD}\\)"], answer: 1, hints: ["Cạnh đối của hình bình hành.", "Hai vectơ này cùng hướng và cùng độ dài."], thinking: "Vì sao \\(\\vec{AB} = \\vec{DC}\\) mà không phải \\(\\vec{AB} = \\vec{CD}\\)? Hãy vẽ hình và chỉ ra hướng mũi tên." },
+                { q: "Cho \\(\\vec{a}\\) và \\(\\vec{b}\\) ngược hướng. Nếu \\(|\\vec{a}| = 2, |\\vec{b}| = 3\\) thì \\(|\\vec{a} + \\vec{b}|\\) bằng:", options: ["5", "1", "6", "0"], answer: 1, hints: ["Vẽ hình biểu diễn hai vectơ ngược hướng.", "Độ dài tổng bằng hiệu hai độ dài."], thinking: "Nếu hai người kéo một vật theo hai hướng ngược nhau với lực 2N và 3N, hợp lực là bao nhiêu? Đây chính là phép cộng vectơ ngược hướng." },
+                { q: "Quy tắc hình bình hành áp dụng cho hình bình hành ABCD là:", options: ["\\(\\vec{AB} + \\vec{AD} = \\vec{AC}\\)", "\\(\\vec{AB} + \\vec{AC} = \\vec{AD}\\)", "\\(\\vec{AD} + \\vec{AC} = \\vec{AB}\\)", "\\(\\vec{AB} + \\vec{BC} = \\vec{BD}\\)"], answer: 0, hints: ["Tổng hai cạnh kề bằng đường chéo.", "Điểm đầu chung là A."], thinking: "Nếu ABCD là hình chữ nhật, \\(\\vec{AB} + \\vec{AD}\\) là vectơ nào? Độ dài của nó liên quan gì đến đường chéo?" },
+                { q: "Hiệu \\(\\vec{a} - \\vec{b}\\) được định nghĩa là:", options: ["\\(\\vec{a} + \\vec{b}\\)", "\\(\\vec{a} + (-\\vec{b})\\)", "\\(-\\vec{a} + \\vec{b}\\)", "\\(-\\vec{a} - \\vec{b}\\)"], answer: 1, hints: ["Phép trừ là phép cộng với số đối.", "Cộng \\(\\vec{a}\\) với vectơ đối của \\(\\vec{b}\\)."], thinking: "Tại sao phép trừ vectơ lại được định nghĩa thông qua phép cộng? Điều này có lợi gì trong tính toán?" },
+                { q: "Cho \\(\\vec{OA} - \\vec{OB}\\). Kết quả là:", options: ["\\(\\vec{AB}\\)", "\\(\\vec{BA}\\)", "\\(\\vec{AO}\\)", "\\(\\vec{BO}\\)"], answer: 1, hints: ["Sử dụng quy tắc hiệu với 3 điểm O, A, B.", "Điểm đầu là B, điểm cuối là A."], thinking: "Nếu bạn đi từ O đến A rồi quay lại O, sau đó đi từ O đến B, thì hiệu \\(\\vec{OA} - \\vec{OB}\\) tương ứng với việc đi từ đâu đến đâu?" }
+            ],
+            [
+                { q: "Cho hình bình hành ABCD có tâm O. Đẳng thức nào đúng?", options: ["\\(\\vec{AB} + \\vec{AD} = 2\\vec{AO}\\)", "\\(\\vec{AB} + \\vec{AC} = 2\\vec{AO}\\)", "\\(\\vec{AB} - \\vec{AD} = 2\\vec{AO}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{AO}\\)"], answer: 0, hints: ["Quy tắc hình bình hành tại A.", "O là trung điểm của AC."], thinking: "Vì sao O là trung điểm AC lại quan trọng? Từ tính chất này, hãy suy ra mối quan hệ giữa \\(\\vec{AC}\\) và \\(\\vec{AO}\\)." },
+                { q: "I là trung điểm của AB. Với mọi điểm M, đẳng thức nào đúng?", options: ["\\(\\vec{MA} + \\vec{MB} = \\vec{MI}\\)", "\\(\\vec{MA} + \\vec{MB} = 2\\vec{MI}\\)", "\\(\\vec{MA} - \\vec{MB} = 2\\vec{MI}\\)", "\\(\\vec{MA} + \\vec{MB} = 0\\)"], answer: 1, hints: ["Chèn điểm I vào hai vectơ.", "Sử dụng tính chất \\(\\vec{IA} + \\vec{IB} = \\vec{0}\\)."], thinking: "Nếu M trùng với I, đẳng thức \\(\\vec{MA} + \\vec{MB} = 2\\vec{MI}\\) trở thành gì? Điều này có hợp lý không?" },
+                { q: "Cho tam giác ABC, G là trọng tâm. Đẳng thức nào đúng?", options: ["\\(\\vec{GA} + \\vec{GB} + \\vec{GC} = \\vec{0}\\)", "\\(\\vec{GA} + \\vec{GB} + \\vec{GC} = 3\\vec{0}\\)", "\\(\\vec{AG} + \\vec{BG} + \\vec{CG} = \\vec{0}\\)", "Cả A và C đều đúng"], answer: 0, hints: ["Tính chất đặc trưng của trọng tâm.", "Tổng 3 vectơ từ G đến 3 đỉnh bằng 0."], thinking: "Vì sao trọng tâm được gọi là 'điểm cân bằng' của tam giác? Điều này liên hệ gì với tổng ba vectơ bằng 0?" },
+                { q: "Cho \\(\\vec{a}\\) và \\(\\vec{b}\\) cùng hướng. Khẳng định nào đúng?", options: ["\\(\\vec{a} = k\\vec{b}\\) với \\(k > 0\\)", "\\(\\vec{a} = k\\vec{b}\\) với \\(k < 0\\)", "\\(\\vec{a} + \\vec{b} = \\vec{0}\\)", "Chúng không thể cùng phương"], answer: 0, hints: ["Cùng hướng thì hệ số tỉ lệ mang dấu gì?", "Sử dụng định nghĩa tích vectơ với một số."], thinking: "Nếu \\(\\vec{a} = 2\\vec{b}\\), hai vectơ này quan hệ thế nào về hướng và độ dài? Nếu \\(\\vec{a} = -2\\vec{b}\\) thì sao?" },
+                { q: "Cho hình chữ nhật ABCD, AB = 3, AD = 4. Độ dài \\(|\\vec{AB} + \\vec{AD}|\\) bằng:", options: ["5", "7", "1", "25"], answer: 0, hints: ["\\(\\vec{AB} + \\vec{AD}\\) là vectơ nào?", "Đường chéo hình chữ nhật tính bằng định lý Pythagore."], thinking: "Độ dài \\(|\\vec{AB} + \\vec{AD}|\\) bằng độ dài đường chéo. Vậy độ dài \\(|\\vec{AB} - \\vec{AD}|\\) là gì? (Gợi ý: vẽ hình và so sánh)." },
+                { q: "Cho tam giác đều ABC cạnh a. Độ dài \\(|\\vec{AB} + \\vec{AC}|\\) bằng:", options: ["\\(a\\)", "\\(a\\sqrt{2}\\)", "\\(a\\sqrt{3}\\)", "2a"], answer: 2, hints: ["Dựng hình bình hành ABDC.", "Độ dài đường chéo chính là 2 lần đường cao tam giác đều."], thinking: "Nếu góc giữa hai vectơ không phải 60° mà là 90° (tam giác vuông cân), thì \\(|\\vec{AB} + \\vec{AC}|\\) sẽ thay đổi thế nào?" },
+                { q: "Cho \\(\\vec{u} = 2\\vec{a} - 3\\vec{b}\\), \\(\\vec{v} = -\\vec{a} + 2\\vec{b}\\). Vectơ \\(2\\vec{u} - \\vec{v}\\) bằng:", options: ["\\(5\\vec{a} - 8\\vec{b}\\)", "\\(3\\vec{a} - 4\\vec{b}\\)", "\\(5\\vec{a} + 8\\vec{b}\\)", "\\(3\\vec{a} + 4\\vec{b}\\)"], answer: 0, hints: ["Tính \\(2\\vec{u}\\) trước.", "Sau đó thực hiện phép trừ vectơ theo từng thành phần \\(\\vec{a}, \\vec{b}\\)."], thinking: "Nếu \\(\\vec{a}, \\vec{b}\\) không cùng phương, việc biểu diễn mọi vectơ dưới dạng \\(x\\vec{a} + y\\vec{b}\\) có giống như việc dùng tọa độ không?" },
+                { q: "Cho tam giác ABC, M là trung điểm BC. Đẳng thức nào đúng?", options: ["\\(\\vec{AB} + \\vec{AC} = \\vec{AM}\\)", "\\(\\vec{AB} + \\vec{AC} = 2\\vec{AM}\\)", "\\(\\vec{AB} - \\vec{AC} = 2\\vec{AM}\\)", "\\(\\vec{AB} + \\vec{AC} = \\vec{BC}\\)"], answer: 1, hints: ["M là trung điểm BC nên \\(\\vec{MB} + \\vec{MC} = \\vec{0}\\).", "Chèn điểm M vào \\(\\vec{AB}\\) và \\(\\vec{AC}\\)."], thinking: "Nếu M là trung điểm BC, tại sao \\(\\vec{AB} + \\vec{AC}\\) lại có 'hướng' từ A đến M? Điều này có giúp xác định trung điểm không?" },
+                { q: "Cho đoạn thẳng AB, điểm K nằm giữa A và B sao cho AK = 2KB. Biểu diễn \\(\\vec{AK}\\) theo \\(\\vec{AB}\\):", options: ["\\(\\vec{AK} = \\frac{2}{3}\\vec{AB}\\)", "\\(\\vec{AK} = \\frac{1}{3}\\vec{AB}\\)", "\\(\\vec{AK} = \\frac{3}{2}\\vec{AB}\\)", "\\(\\vec{AK} = -\\frac{2}{3}\\vec{AB}\\)"], answer: 0, hints: ["AK chiếm mấy phần của AB?", "K nằm giữa A, B nên \\(\\vec{AK}\\) cùng hướng \\(\\vec{AB}\\)."], thinking: "Nếu K chia AB theo tỉ lệ m:n (AK:KB = m:n), thì \\(\\vec{AK} = \\frac{m}{m+n}\\vec{AB}\\). Hãy kiểm chứng với trường hợp m=2, n=1 ở trên." },
+                { q: "Cho hình bình hành ABCD. \\(\\vec{DA} + \\vec{DB} + \\vec{DC}\\) bằng:", options: ["\\(\\vec{DB}\\)", "2\\(\\vec{DB}\\)", "3\\(\\vec{DB}\\)", "\\(\\vec{0}\\)"], answer: 1, hints: ["Nhóm \\(\\vec{DA} + \\vec{DC}\\) lại.", "\\(\\vec{DA} + \\vec{DC} = \\vec{DB}\\) (quy tắc hình bình hành)."], thinking: "Nếu ABCD là hình bình hành và M là trung điểm DB, thì \\(\\vec{DA} + \\vec{DC} = 2\\vec{DM}\\). Hãy chứng minh điều này bằng cách chèn điểm M." }
+            ],
+            [
+                { q: "Cho hình vuông ABCD cạnh a. Độ dài \\(|\\vec{AB} + \\vec{AC} + \\vec{AD}|\\) bằng:", options: ["\\(a\\sqrt{2}\\)", "\\(2a\\sqrt{2}\\)", "\\(a\\sqrt{5}\\)", "\\(2a\\)"], answer: 1, hints: ["\\(\\vec{AB} + \\vec{AD} = \\vec{AC}\\) nên tổng bằng \\(2\\vec{AC}\\).", "Đường chéo hình vuông cạnh a là \\(a\\sqrt{2}\\)."], thinking: "Nếu thay hình vuông bằng hình chữ nhật có AB=a, AD=b, thì \\(|\\vec{AB} + \\vec{AC} + \\vec{AD}|\\) bằng bao nhiêu? (Gợi ý: vẫn là \\(2|\\vec{AC}|\\))." },
+                { q: "Cho tam giác ABC vuông tại A, AB=3, AC=4. Gọi M là trung điểm BC. Độ dài \\(|\\vec{AM}|\\) bằng:", options: ["2.5", "5", "3.5", "2"], answer: 0, hints: ["M là trung điểm cạnh huyền.", "Trung tuyến ứng cạnh huyền bằng nửa cạnh huyền."], thinking: "Trong tam giác vuông, trung tuyến ứng với cạnh huyền có độ dài bằng nửa cạnh huyền. Vì sao? Hãy chứng minh bằng cách dựng hình chữ nhật ABCD với M là tâm." },
+                { q: "Cho tam giác ABC. I, J lần lượt là trung điểm AB, AC. Đẳng thức nào đúng?", options: ["\\(\\vec{IJ} = \\frac{1}{2}\\vec{BC}\\)", "\\(\\vec{IJ} = \\frac{1}{2}\\vec{CB}\\)", "\\(\\vec{IJ} = 2\\vec{BC}\\)", "\\(\\vec{IJ} = \\vec{BC}\\)"], answer: 0, hints: ["IJ là đường trung bình của tam giác ABC.", "Hướng từ I đến J cùng hướng từ B đến C."], thinking: "Đường trung bình của tam giác song song và bằng nửa cạnh đáy. Điều này giúp chứng minh IJ // BC như thế nào?" },
+                { q: "Cho hình chữ nhật ABCD, AB=3, AD=4. M là điểm bất kì. Vectơ \\(\\vec{w} = \\vec{MA} - \\vec{MB} + \\vec{MD} - \\vec{MC}\\) có độ dài là:", options: ["3", "4", "6", "8"], answer: 2, hints: ["Nhóm (\\(\\vec{MA} - \\vec{MB}\\)) và (\\(\\vec{MD} - \\vec{MC}\\)).", "Sử dụng quy tắc hiệu: \\(\\vec{MA} - \\vec{MB} = \\vec{BA}\\)."], thinking: "Nếu ABCD là hình bình hành thay vì hình chữ nhật, kết quả \\(\\vec{w} = 2\\vec{BA}\\) có còn đúng không? Vì sao?" },
+                { q: "Cho tam giác ABC vuông tại A, AB=6, AC=8. P là trung điểm AB. Phân tích \\(\\vec{CP}\\) theo \\(\\vec{u} = \\vec{AB}, \\vec{v} = \\vec{AC}\\):", options: ["\\(\\frac{1}{2}\\vec{u} - \\vec{v}\\)", "\\(-\\frac{1}{2}\\vec{u} + \\vec{v}\\)", "\\(\\frac{1}{2}\\vec{u} + \\vec{v}\\)", "\\(-\\frac{1}{2}\\vec{u} - \\vec{v}\\)"], answer: 0, hints: ["Chèn điểm A: \\(\\vec{CP} = \\vec{CA} + \\vec{AP}\\).", "\\(\\vec{CA} = -\\vec{v}\\) và \\(\\vec{AP} = \\frac{1}{2}\\vec{AB}\\)."], thinking: "Nếu P là trung điểm của AC thay vì AB, kết quả sẽ thay đổi như thế nào? Hãy vẽ hình để kiểm chứng." },
+                { q: "Với dữ kiện câu trên, độ dài \\(|\\vec{CP}|\\) bằng:", options: ["10", "\\(\\sqrt{73}\\)", "\\(\\sqrt{55}\\)", "8"], answer: 1, hints: ["Tam giác ACP vuông tại A.", "Tính AC và AP, dùng Pythagore."], thinking: "Vì sao \\(|\\vec{CP}|\\) lại lớn hơn cả AB và AC? Điều này có mâu thuẫn gì với bất đẳng thức tam giác không?" },
+                { q: "Cho hình vuông ABCD cạnh a. M, N là trung điểm BC, CD. Độ dài \\(|\\vec{MN}|\\) bằng:", options: ["\\(a\\sqrt{2}\\)", "\\(\\frac{a\\sqrt{2}}{2}\\)", "\\(a\\)", "\\(\\frac{a}{2}\\)"], answer: 1, hints: ["MN là đường trung bình của tam giác BCD.", "BD là đường chéo hình vuông."], thinking: "Nếu M, N là trung điểm của hai cạnh bất kỳ trong hình vuông (không kề nhau), độ dài MN có luôn bằng \\(\\frac{a\\sqrt{2}}{2}\\) không?" },
+                { q: "Cho tam giác ABC, K thuộc cạnh BC sao cho BK = 2KC. Phân tích \\(\\vec{AK}\\) theo \\(\\vec{AB}, \\vec{AC}\\):", options: ["\\(\\frac{1}{3}\\vec{AB} + \\frac{2}{3}\\vec{AC}\\)", "\\(\\frac{2}{3}\\vec{AB} + \\frac{1}{3}\\vec{AC}\\)", "\\(\\frac{1}{2}\\vec{AB} + \\frac{1}{2}\\vec{AC}\\)", "\\(\\frac{1}{3}\\vec{AB} - \\frac{2}{3}\\vec{AC}\\)"], answer: 0, hints: ["Chèn A: \\(\\vec{AK} = \\vec{AB} + \\vec{BK}\\).", "\\(\\vec{BK} = \\frac{2}{3}\\vec{BC} = \\frac{2}{3}(\\vec{AC} - \\vec{AB})\\)."], thinking: "Tổng quát: nếu K chia BC theo tỉ lệ BK:KC = m:n, công thức phân tích \\(\\vec{AK}\\) sẽ là gì?" },
+                { q: "Cho hình chữ nhật ABCD, AB=6, AD=8. M là điểm bất kì. Độ dài \\(|\\vec{MA} + \\vec{MC} - 2\\vec{MB}|\\) bằng:", options: ["6", "8", "10", "14"], answer: 2, hints: ["Viết lại thành \\((\\vec{MA} - \\vec{MB}) + (\\vec{MC} - \\vec{MB})\\).", "Sử dụng quy tắc hiệu và quy tắc hình bình hành tại B."], thinking: "Kết quả này không phụ thuộc vào vị trí của M. Vì sao? Điều này có nghĩa là gì về mặt hình học?" },
+                { q: "Cho tam giác ABC. M, N, P là trung điểm BC, CA, AB. Đẳng thức nào đúng?", options: ["\\(\\vec{AM} + \\vec{BN} + \\vec{CP} = \\vec{0}\\)", "\\(\\vec{AM} + \\vec{BN} + \\vec{CP} = 2\\vec{0}\\)", "\\(\\vec{AM} + \\vec{BN} - \\vec{CP} = \\vec{0}\\)", "\\(\\vec{AM} - \\vec{BN} + \\vec{CP} = \\vec{0}\\)"], answer: 0, hints: ["Sử dụng tính chất trung điểm để biểu diễn AM, BN, CP theo 2 cạnh của tam giác.", "Cộng vế theo vế và triệt tiêu các cặp vectơ đối."], thinking: "Ba đường trung tuyến của tam giác đồng quy tại trọng tâm. Điều này liên hệ gì với đẳng thức \\(\\vec{AM} + \\vec{BN} + \\vec{CP} = \\vec{0}\\)?" }
+            ]
+        ];
+
+        let currentQuickQ = 0, quickScore = 0;
+
+        function loadQuickQuiz(groupIndex) {
+            currentQuickQ = 0; quickScore = 0;
+            renderQuickQuestion(parseInt(groupIndex));
+        }
+
+        function renderQuickQuestion(groupIndex) {
+            const container = document.getElementById('quick-quiz-container');
+            const data = quickQuizData[groupIndex];
+
+            if (currentQuickQ >= data.length) {
+                container.innerHTML = `<div class="result-box">
+                    <h2>🎉 Hoàn thành!</h2>
+                    <p style="font-size: 16px; margin: 20px 0;">Bạn đã trả lời đúng</p>
+                    <div class="result-score">${quickScore}/${data.length}</div>
+                    <button class="btn btn-primary" onclick="loadQuickQuiz(${groupIndex})">🔄 Làm lại</button>
+                </div>`;
+                document.getElementById('quick-progress').style.width = '100%';
+                return;
+            }
+
+            const qData = data[currentQuickQ];
+            document.getElementById('quick-progress').style.width = `${(currentQuickQ / data.length) * 100}%`;
+
+            container.innerHTML = `
+                <div class="question-box">
+                    <div class="q-badge">Câu hỏi ${currentQuickQ + 1} / ${data.length}</div>
+                    <div style="font-size: 17px; font-weight: 600; margin-bottom: 4px;">${qData.q}</div>
+                    <div class="options-list" id="quick-options">
+                        ${qData.options.map((opt, i) => `<button class="option-btn" onclick="checkQuickAnswer(${groupIndex}, ${i}, this)">${String.fromCharCode(65 + i)}. ${opt}</button>`).join('')}
+                    </div>
+                    <div class="hint-container">
+                        <button class="btn btn-warning" onclick="toggleHint(1)">💡 Gợi ý 1</button>
+                        <button class="btn btn-warning" onclick="toggleHint(2)">💡 Gợi ý 2</button>
+                        <button class="btn btn-thinking" onclick="toggleHint('think')">🤔 Câu hỏi gợi mở</button>
+                        <button class="btn btn-ai" onclick="askGemini('${qData.q.replace(/'/g, "\\'")}', '${qData.options[qData.answer].replace(/'/g, "\\'")}')">🤖 Hỏi AI Gemini</button>
+                    </div>
+                    <div class="hint-text" id="hint-1"><strong>💡 Gợi ý 1:</strong> ${qData.hints[0]}</div>
+                    <div class="hint-text" id="hint-2"><strong>💡 Gợi ý 2:</strong> ${qData.hints[1]}</div>
+                    <div class="thinking-text" id="hint-think"><strong>🤔 Câu hỏi gợi mở (tư duy sâu hơn):</strong> ${qData.thinking}</div>
+                    <div class="ai-response" id="ai-box">
+                        <strong>🤖 Trợ lý AI:</strong> <span id="ai-content"></span>
+                        <div class="spinner" id="ai-spinner"></div>
+                    </div>
+                </div>`;
+            renderMath();
+        }
+
+        function toggleHint(num) {
+            const el = document.getElementById(`hint-${num}`);
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+            renderMath();
+        }
+
+        function checkQuickAnswer(groupIndex, selectedIdx, btn) {
+            const qData = quickQuizData[groupIndex][currentQuickQ];
+            const options = document.querySelectorAll('#quick-options .option-btn');
+            options.forEach(opt => opt.style.pointerEvents = 'none');
+            if (selectedIdx === qData.answer) { btn.classList.add('correct'); quickScore++; }
+            else { btn.classList.add('wrong'); options[qData.answer].classList.add('correct'); }
+            setTimeout(() => { currentQuickQ++; renderQuickQuestion(groupIndex); }, 1600);
+        }
+
+        async function askGemini(question, correctAnswer) {
+            const aiBox = document.getElementById('ai-box');
+            const aiContent = document.getElementById('ai-content');
+            const spinner = document.getElementById('ai-spinner');
+            if (!geminiApiKey) { openModal(); return; }
+            aiBox.style.display = 'block';
+            spinner.style.display = 'block';
+            aiContent.innerHTML = "Đang suy nghĩ...";
+            const prompt = `Bạn là giáo viên Toán giỏi, thân thiện. Giải thích chi tiết tại sao đáp án đúng cho câu hỏi vectơ sau là: "${correctAnswer}".\nCâu hỏi: ${question}\nHãy giải thích ngắn gọn, dễ hiểu, đi thẳng vào bản chất và các bước giải (nếu có).`;
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${geminiApiKey}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json();
+                if (data.error) aiContent.innerHTML = `<span style="color:red">Lỗi API: ${data.error.message}. Kiểm tra lại Key.</span>`;
+                else {
+                    const text = data.candidates[0].content.parts[0].text;
+                    aiContent.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                }
+            } catch (error) {
+                aiContent.innerHTML = `<span style="color:red">Không thể kết nối đến AI. Vui lòng thử lại.</span>`;
+            } finally {
+                spinner.style.display = 'none';
+                renderMath();
+            }
+        }
+
+        // ========== EXAM DATA (3 đề × 22 câu: 12 MCQ + 4 Đ/S + 6 Ngắn) ==========
+        const examData = [
+            {
+                part1: [
+                    { q: "Cho hình bình hành ABCD. Khẳng định nào sau đây đúng?", options: ["\\(\\vec{AB} = \\vec{CD}\\)", "\\(\\vec{AB} = \\vec{DC}\\)", "\\(\\vec{AB} = -\\vec{CD}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{BD}\\)"], answer: 1 },
+                    { q: "Cho 3 điểm A, B, C phân biệt. Đẳng thức nào đúng?", options: ["\\(\\vec{AB} + \\vec{BC} = \\vec{CA}\\)", "\\(\\vec{AB} + \\vec{BC} = \\vec{AC}\\)", "\\(\\vec{AB} - \\vec{BC} = \\vec{AC}\\)", "\\(\\vec{AC} + \\vec{CB} = \\vec{AB}\\)"], answer: 1 },
+                    { q: "Cho tam giác ABC đều cạnh 2a. Độ dài \\(|\\vec{AB} + \\vec{AC}|\\) là:", options: ["\\(a\\sqrt{3}\\)", "\\(2a\\sqrt{3}\\)", "\\(a\\)", "\\(2a\\)"], answer: 1 },
+                    { q: "Cho hình vuông ABCD cạnh a. Độ dài \\(|\\vec{AB} + \\vec{AD}|\\) là:", options: ["\\(a\\)", "\\(a\\sqrt{2}\\)", "\\(2a\\)", "\\(a\\sqrt{3}\\)"], answer: 1 },
+                    { q: "I là trung điểm AB. Đẳng thức nào đúng với mọi M?", options: ["\\(\\vec{MA} + \\vec{MB} = \\vec{MI}\\)", "\\(\\vec{MA} + \\vec{MB} = 2\\vec{MI}\\)", "\\(\\vec{MA} - \\vec{MB} = 2\\vec{MI}\\)", "\\(\\vec{MA} + \\vec{MB} = 0\\)"], answer: 1 },
+                    { q: "G là trọng tâm tam giác ABC. Đẳng thức nào đúng?", options: ["\\(\\vec{GA} + \\vec{GB} + \\vec{GC} = \\vec{0}\\)", "\\(\\vec{GA} + \\vec{GB} + \\vec{GC} = 3\\vec{0}\\)", "\\(\\vec{AG} + \\vec{BG} + \\vec{CG} = \\vec{0}\\)", "\\(\\vec{AB} + \\vec{BC} + \\vec{CA} = \\vec{0}\\)"], answer: 0 },
+                    { q: "Cho \\(\\vec{a}\\) và \\(\\vec{b}\\) ngược hướng, \\(|\\vec{a}|=3, |\\vec{b}|=5\\). Độ dài \\(|\\vec{a} - \\vec{b}|\\) là:", options: ["2", "8", "15", "\\(-2\\)"], answer: 1 },
+                    { q: "Cho \\(\\vec{a}\\) và \\(\\vec{b}\\) cùng hướng, \\(|\\vec{a}|=2, |\\vec{b}|=3\\). Độ dài \\(|\\vec{a} + \\vec{b}|\\) là:", options: ["1", "5", "6", "\\(-1\\)"], answer: 1 },
+                    { q: "Cho tam giác ABC, M trung điểm BC. Đẳng thức nào đúng?", options: ["\\(\\vec{AB} + \\vec{AC} = \\vec{AM}\\)", "\\(\\vec{AB} + \\vec{AC} = 2\\vec{AM}\\)", "\\(\\vec{AB} - \\vec{AC} = 2\\vec{AM}\\)", "\\(\\vec{AB} + \\vec{AC} = \\vec{BC}\\)"], answer: 1 },
+                    { q: "Cho hình bình hành ABCD tâm O. Đẳng thức nào đúng?", options: ["\\(\\vec{AB} + \\vec{AD} = \\vec{AO}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{AC}\\)", "\\(\\vec{AB} - \\vec{AD} = \\vec{AC}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{BD}\\)"], answer: 1 },
+                    { q: "Cho \\(\\vec{OA} - \\vec{OB}\\), kết quả là:", options: ["\\(\\vec{AB}\\)", "\\(\\vec{BA}\\)", "\\(\\vec{AO}\\)", "\\(\\vec{BO}\\)"], answer: 1 },
+                    { q: "Cho hình vuông ABCD. Khẳng định nào đúng?", options: ["\\(\\vec{AB} = \\vec{BC}\\)", "\\(\\vec{AB} = \\vec{CD}\\)", "\\(\\vec{AB} = \\vec{DC}\\)", "\\(\\vec{AB} = -\\vec{DC}\\)"], answer: 2 }
+                ],
+                part2: [
+                    { q: "Cho hình chữ nhật ABCD tâm O. Xét tính đúng/sai các mệnh đề:", statements: ["\\(\\vec{AB} + \\vec{AD} = \\vec{AC}\\)", "\\(\\vec{AB} = \\vec{DC}\\)", "\\(\\vec{OA} + \\vec{OB} = \\vec{OC} + \\vec{OD}\\)", "\\(|\\vec{AC}| = |\\vec{BD}|\\)"], answers: [true, true, false, true] },
+                    { q: "Cho tam giác ABC, G trọng tâm, M trung điểm BC. Xét tính đúng/sai:", statements: ["\\(\\vec{GA} + \\vec{GB} + \\vec{GC} = \\vec{0}\\)", "\\(\\vec{AG} = \\frac{2}{3}\\vec{AM}\\)", "\\(\\vec{GB} + \\vec{GC} = 2\\vec{GM}\\)", "\\(\\vec{AB} + \\vec{AC} = 2\\vec{AG}\\)"], answers: [true, true, true, false] },
+                    { q: "Cho hình bình hành ABCD. Xét tính đúng/sai:", statements: ["\\(\\vec{AB} = \\vec{DC}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{AC}\\)", "\\(\\vec{AD} = \\vec{BC}\\)", "\\(\\vec{AB} - \\vec{AD} = \\vec{AC}\\)"], answers: [true, true, true, false] },
+                    { q: "Cho tam giác ABC vuông tại A, AB=3, AC=4. Xét tính đúng/sai:", statements: ["\\(|\\vec{AB} + \\vec{AC}| = 5\\)", "\\(|\\vec{AB} - \\vec{AC}| = 1\\)", "\\(BC = 5\\)", "\\(\\vec{AB} + \\vec{AC} = \\vec{BC}\\)"], answers: [true, false, true, false] }
+                ],
+                part3: [
+                    { q: "Cho đoạn thẳng AB = 10. I là trung điểm của AB. Tính \\(|\\vec{IA} + \\vec{IB}|\\).", answer: "0" },
+                    { q: "Cho tam giác ABC vuông tại A, AB = 3, AC = 4. Tính \\(|\\vec{AB} + \\vec{AC}|\\).", answer: "5" },
+                    { q: "Cho hình chữ nhật ABCD có AB = 6, AD = 8. Tính \\(|\\vec{AC}|\\).", answer: "10" },
+                    { q: "Cho hình vuông ABCD cạnh a = 3. Tính \\(|\\vec{AB} + \\vec{AC} + \\vec{AD}|^2\\).", answer: "72" },
+                    { q: "Cho tam giác đều ABC cạnh a = 3, G là trọng tâm. Tính \\(|\\vec{AG}|^2\\).", answer: "3" },
+                    { q: "Cho \\(\\vec{u} = 2\\vec{a} - 3\\vec{b}\\), \\(\\vec{v} = -\\vec{a} + 2\\vec{b}\\). Biểu diễn \\(2\\vec{u} - \\vec{v}\\) theo \\(\\vec{a}, \\vec{b}\\) dạng \\(x\\vec{a} + y\\vec{b}\\). Nhập x;y (VD: 5;-8).", answer: "5;-8" }
+                ]
+            },
+            {
+                part1: [
+                    { q: "Cho 3 điểm A, B, C. Đẳng thức nào đúng?", options: ["\\(\\vec{AB} + \\vec{BC} = \\vec{CA}\\)", "\\(\\vec{AB} + \\vec{BC} = \\vec{AC}\\)", "\\(\\vec{AB} - \\vec{BC} = \\vec{AC}\\)", "\\(\\vec{AC} + \\vec{CB} = \\vec{AB}\\)"], answer: 1 },
+                    { q: "Cho hình bình hành ABCD. Đẳng thức nào đúng?", options: ["\\(\\vec{AB} = \\vec{CD}\\)", "\\(\\vec{AB} = \\vec{DC}\\)", "\\(\\vec{AB} = -\\vec{DC}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{BD}\\)"], answer: 1 },
+                    { q: "Cho \\(\\vec{a}, \\vec{b}\\) cùng hướng, \\(|\\vec{a}|=4, |\\vec{b}|=6\\). Độ dài \\(|\\vec{a} + \\vec{b}|\\) là:", options: ["2", "10", "24", "\\(-2\\)"], answer: 1 },
+                    { q: "Cho \\(\\vec{a}, \\vec{b}\\) ngược hướng, \\(|\\vec{a}|=4, |\\vec{b}|=6\\). Độ dài \\(|\\vec{a} - \\vec{b}|\\) là:", options: ["2", "10", "24", "\\(-2\\)"], answer: 1 },
+                    { q: "Cho tam giác ABC đều cạnh a. Độ dài \\(|\\vec{AB} - \\vec{AC}|\\) là:", options: ["\\(a\\)", "\\(a\\sqrt{2}\\)", "\\(a\\sqrt{3}\\)", "\\(2a\\)"], answer: 0 },
+                    { q: "Cho tam giác ABC, G trọng tâm. \\(\\vec{AG} + \\vec{BG} + \\vec{CG}\\) bằng:", options: ["\\(\\vec{0}\\)", "\\(3\\vec{GA}\\)", "\\(\\vec{GA}\\)", "\\(-3\\vec{GA}\\)"], answer: 0 },
+                    { q: "Cho hình vuông ABCD cạnh a. Độ dài \\(|\\vec{AB} + \\vec{BC}|\\) là:", options: ["\\(a\\)", "\\(a\\sqrt{2}\\)", "\\(2a\\)", "\\(a\\sqrt{3}\\)"], answer: 1 },
+                    { q: "Cho hình bình hành ABCD. \\(\\vec{AB} - \\vec{AD}\\) bằng:", options: ["\\(\\vec{AC}\\)", "\\(\\vec{BD}\\)", "\\(\\vec{DB}\\)", "\\(\\vec{CA}\\)"], answer: 2 },
+                    { q: "M là trung điểm AB. Đẳng thức nào đúng?", options: ["\\(\\vec{MA} + \\vec{MB} = \\vec{AB}\\)", "\\(\\vec{MA} + \\vec{MB} = \\vec{0}\\)", "\\(\\vec{MA} - \\vec{MB} = \\vec{0}\\)", "\\(\\vec{MA} - \\vec{MB} = \\vec{AB}\\)"], answer: 1 },
+                    { q: "G là trọng tâm tam giác ABC. Với M bất kỳ, \\(\\vec{MA} + \\vec{MB} + \\vec{MC}\\) bằng:", options: ["\\(3\\vec{MG}\\)", "\\(\\vec{MG}\\)", "\\(3\\vec{GM}\\)", "\\(\\vec{0}\\)"], answer: 0 },
+                    { q: "Cho \\(\\vec{a}, \\vec{b}\\) không cùng phương. Cặp vectơ nào cùng phương?", options: ["\\(\\vec{a}\\) và \\(\\vec{b}\\)", "\\(\\vec{a}\\) và \\(2\\vec{a}\\)", "\\(\\vec{a}\\) và \\(\\vec{a}+\\vec{b}\\)", "\\(\\vec{a}+\\vec{b}\\) và \\(\\vec{a}-\\vec{b}\\)"], answer: 1 },
+                    { q: "Cho tam giác ABC, M trung điểm BC. Đẳng thức nào đúng?", options: ["\\(\\vec{AM} = \\vec{AB} + \\vec{AC}\\)", "\\(\\vec{AM} = \\frac{\\vec{AB} + \\vec{AC}}{2}\\)", "\\(2\\vec{AM} = \\vec{AB} - \\vec{AC}\\)", "\\(\\vec{AM} = \\frac{\\vec{BC}}{2}\\)"], answer: 1 }
+                ],
+                part2: [
+                    { q: "Cho hình bình hành ABCD tâm O. Xét tính đúng/sai:", statements: ["\\(\\vec{AB} + \\vec{AD} = \\vec{AC}\\)", "\\(\\vec{AB} + \\vec{AC} = \\vec{AD}\\)", "\\(\\vec{OA} + \\vec{OC} = \\vec{0}\\)", "\\(\\vec{OB} + \\vec{OD} = \\vec{0}\\)"], answers: [true, false, true, true] },
+                    { q: "Cho tam giác ABC, G trọng tâm, M trung điểm BC. Xét tính đúng/sai:", statements: ["\\(\\vec{AM} = \\frac{\\vec{AB} + \\vec{AC}}{2}\\)", "\\(\\vec{AG} = \\frac{2}{3}\\vec{AM}\\)", "\\(\\vec{BG} + \\vec{CG} = 2\\vec{MG}\\)", "\\(\\vec{BG} + \\vec{CG} = 2\\vec{AG}\\)"], answers: [true, true, true, false] },
+                    { q: "Cho hình chữ nhật ABCD. Xét tính đúng/sai:", statements: ["\\(\\vec{AB} = \\vec{DC}\\)", "\\(|\\vec{AC}| = |\\vec{BD}|\\)", "\\(\\vec{AC} + \\vec{BD} = \\vec{0}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{AC}\\)"], answers: [true, true, false, true] },
+                    { q: "Cho tam giác ABC vuông tại A, AB=6, AC=8. Xét tính đúng/sai:", statements: ["\\(|\\vec{AB} + \\vec{AC}| = 10\\)", "\\(|\\vec{AB} - \\vec{AC}| = 10\\)", "\\(|\\vec{AB} + \\vec{AC}| = |\\vec{AB} - \\vec{AC}|\\)", "\\(\\vec{AB} + \\vec{AC} = \\vec{BC}\\)"], answers: [true, true, true, false] }
+                ],
+                part3: [
+                    { q: "Cho đoạn AB = 8. M trung điểm AB. Tính \\(|\\vec{MA} + \\vec{MB}|\\).", answer: "0" },
+                    { q: "Cho tam giác đều ABC cạnh 2. Tính \\(|\\vec{AB} + \\vec{AC}|^2\\).", answer: "12" },
+                    { q: "Cho hình vuông ABCD cạnh 4. Tính \\(|\\vec{AC}|^2\\).", answer: "32" },
+                    { q: "Cho hình chữ nhật ABCD, AB=3, AD=4. Tính \\(|\\vec{AB} - \\vec{AD}|\\).", answer: "5" },
+                    { q: "Cho tam giác ABC đều cạnh a=6, G trọng tâm. Tính \\(|\\vec{BG}|^2\\).", answer: "12" },
+                    { q: "Cho \\(\\vec{u} = 3\\vec{a} - 2\\vec{b}\\), \\(\\vec{v} = \\vec{a} + \\vec{b}\\). Tính \\(\\vec{u} - 2\\vec{v}\\) dạng \\(x\\vec{a} + y\\vec{b}\\). Nhập x;y.", answer: "1;-4" }
+                ]
+            },
+            {
+                part1: [
+                    { q: "Cho tam giác ABC. Đẳng thức nào đúng?", options: ["\\(\\vec{AB} + \\vec{BC} = \\vec{CA}\\)", "\\(\\vec{AB} + \\vec{BC} = \\vec{AC}\\)", "\\(\\vec{AB} + \\vec{AC} = \\vec{BC}\\)", "\\(\\vec{AB} - \\vec{AC} = \\vec{BC}\\)"], answer: 1 },
+                    { q: "Cho hình bình hành ABCD. Khẳng định nào SAI?", options: ["\\(\\vec{AB} = \\vec{DC}\\)", "\\(\\vec{AD} = \\vec{BC}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{AC}\\)", "\\(\\vec{AB} + \\vec{BC} = \\vec{BD}\\)"], answer: 3 },
+                    { q: "Cho \\(|\\vec{a}|=3, |\\vec{b}|=4\\), \\(\\vec{a} \\perp \\vec{b}\\). Độ dài \\(|\\vec{a} + \\vec{b}|\\) là:", options: ["7", "5", "1", "12"], answer: 1 },
+                    { q: "Cho \\(|\\vec{a}|=3, |\\vec{b}|=4\\), \\(\\vec{a}, \\vec{b}\\) cùng hướng. Độ dài \\(|\\vec{a} - \\vec{b}|\\) là:", options: ["7", "5", "1", "12"], answer: 2 },
+                    { q: "Cho hình vuông ABCD cạnh a. Độ dài \\(|\\vec{AB} - \\vec{BC}|\\) là:", options: ["\\(a\\)", "\\(a\\sqrt{2}\\)", "\\(2a\\)", "\\(a\\sqrt{3}\\)"], answer: 1 },
+                    { q: "Cho tam giác ABC, I trung điểm AB. \\(\\vec{IA} + \\vec{IB}\\) bằng:", options: ["\\(\\vec{AB}\\)", "\\(\\vec{0}\\)", "\\(2\\vec{IA}\\)", "\\(-\\vec{AB}\\)"], answer: 1 },
+                    { q: "Cho tam giác ABC, G trọng tâm. \\(\\vec{GA} + \\vec{GB} + \\vec{GC}\\) bằng:", options: ["\\(\\vec{0}\\)", "\\(3\\vec{GA}\\)", "\\(\\vec{GA}\\)", "\\(3\\vec{AG}\\)"], answer: 0 },
+                    { q: "Cho hình bình hành ABCD. \\(\\vec{AB} + \\vec{AD}\\) bằng:", options: ["\\(\\vec{BD}\\)", "\\(\\vec{AC}\\)", "\\(\\vec{DB}\\)", "\\(\\vec{CA}\\)"], answer: 1 },
+                    { q: "M trung điểm AB. Với N bất kỳ, \\(\\vec{NA} + \\vec{NB}\\) bằng:", options: ["\\(\\vec{NM}\\)", "\\(2\\vec{NM}\\)", "\\(2\\vec{MN}\\)", "\\(\\vec{0}\\)"], answer: 1 },
+                    { q: "Cho tam giác ABC vuông tại A. Độ dài BC bằng:", options: ["\\(\\vec{AB} + \\vec{AC}\\)", "\\(\\vec{AB} - \\vec{AC}\\)", "\\(|\\vec{AB} + \\vec{AC}|\\)", "\\(|\\vec{AB}| + |\\vec{AC}|\\)"], answer: 2 },
+                    { q: "Cho \\(\\vec{a}, \\vec{b}\\) không cùng phương. Có bao nhiêu bộ (x,y) để \\(\\vec{w} = x\\vec{a} + y\\vec{b}\\)?", options: ["0", "1", "2", "Vô số"], answer: 1 },
+                    { q: "Cho tam giác ABC, M trung điểm BC. \\(\\vec{AM}\\) bằng:", options: ["\\(\\frac{\\vec{AB} + \\vec{AC}}{2}\\)", "\\(\\vec{AB} + \\vec{AC}\\)", "\\(\\frac{\\vec{AB} - \\vec{AC}}{2}\\)", "\\(\\vec{AB} - \\vec{AC}\\)"], answer: 0 }
+                ],
+                part2: [
+                    { q: "Cho hình chữ nhật ABCD tâm O. Xét tính đúng/sai:", statements: ["\\(\\vec{AC} = \\vec{BD}\\)", "\\(|\\vec{AC}| = |\\vec{BD}|\\)", "\\(\\vec{OA} + \\vec{OC} = \\vec{0}\\)", "\\(\\vec{OB} + \\vec{OD} = \\vec{0}\\)"], answers: [false, true, true, true] },
+                    { q: "Cho tam giác ABC, G trọng tâm, M trung điểm BC. Xét tính đúng/sai:", statements: ["\\(\\vec{MB} + \\vec{MC} = \\vec{0}\\)", "\\(\\vec{AG} = \\frac{3}{2}\\vec{AM}\\)", "\\(\\vec{GA} + \\vec{GB} + \\vec{GC} = \\vec{0}\\)", "\\(\\vec{AB} + \\vec{AC} = 3\\vec{AG}\\)"], answers: [true, false, true, true] },
+                    { q: "Cho hình bình hành ABCD. Xét tính đúng/sai:", statements: ["\\(\\vec{AB} = \\vec{CD}\\)", "\\(\\vec{AB} = \\vec{DC}\\)", "\\(\\vec{AB} + \\vec{BC} = \\vec{AC}\\)", "\\(\\vec{AB} + \\vec{AD} = \\vec{BD}\\)"], answers: [false, true, true, false] },
+                    { q: "Cho tam giác ABC đều cạnh a. Xét tính đúng/sai:", statements: ["\\(|\\vec{AB}| = |\\vec{AC}|\\)", "\\(|\\vec{AB} + \\vec{AC}| = a\\sqrt{3}\\)", "\\(|\\vec{AB} - \\vec{AC}| = a\\)", "\\(\\vec{AB} = \\vec{AC}\\)"], answers: [true, true, true, false] }
+                ],
+                part3: [
+                    { q: "Cho đoạn AB = 6. I trung điểm. Tính \\(|\\vec{IA} + \\vec{IB}|\\).", answer: "0" },
+                    { q: "Cho tam giác đều ABC cạnh 1. Tính \\(|\\vec{AB} + \\vec{AC}|^2\\).", answer: "3" },
+                    { q: "Cho hình vuông ABCD cạnh 5. Tính \\(|\\vec{AC}|^2\\).", answer: "50" },
+                    { q: "Cho hình chữ nhật ABCD, AB=5, AD=12. Tính \\(|\\vec{AC}|\\).", answer: "13" },
+                    { q: "Cho tam giác ABC đều cạnh a=3, G trọng tâm. Tính \\(|\\vec{CG}|^2\\).", answer: "3" },
+                    { q: "Cho \\(\\vec{u} = \\vec{a} - 2\\vec{b}\\), \\(\\vec{v} = 3\\vec{a} + \\vec{b}\\). Tính \\(2\\vec{u} + \\vec{v}\\) dạng \\(x\\vec{a} + y\\vec{b}\\). Nhập x;y.", answer: "5;-3" }
+                ]
+            }
+        ];
+
+        let examAnswers = {};
+        let currentExamGroup = 0;
+        let timerInterval = null;
+
+        function loadExam(groupIndex) {
+            currentExamGroup = parseInt(groupIndex);
+            examAnswers = {};
+            const container = document.getElementById('exam-container');
+            const nav = document.getElementById('exam-nav');
+            const data = examData[currentExamGroup];
+
+            container.innerHTML = '';
+            nav.innerHTML = '';
+
+            let qIndex = 0;
+
+            // PHẦN I: 12 MCQ
+            container.innerHTML += `<div class="exam-part-header"><span class="num">PHẦN I</span> Trắc nghiệm nhiều phương án lựa chọn <span class="num">12 câu</span></div>`;
+            data.part1.forEach((q) => {
+                const idx = qIndex++;
+                container.innerHTML += `<div class="question-box" id="exam-q-${idx}">
+                    <div class="q-badge">Câu ${idx + 1}</div>
+                    <div style="font-weight: 600; font-size: 16px;">${q.q}</div>
+                    <div class="options-list">
+                        ${q.options.map((opt, i) => `<button class="option-btn" onclick="saveExamMCQ(${idx}, ${i}, this)">${String.fromCharCode(65 + i)}. ${opt}</button>`).join('')}
+                    </div>
+                </div>`;
+                nav.innerHTML += `<button class="q-nav-btn" id="nav-btn-${idx}" onclick="scrollToQuestion(${idx})">${idx + 1}</button>`;
+            });
+
+            // PHẦN II: 4 câu Đúng/Sai
+            container.innerHTML += `<div class="exam-part-header"><span class="num">PHẦN II</span> Trắc nghiệm đúng/sai <span class="num">4 câu</span></div>`;
+            data.part2.forEach((q) => {
+                const idx = qIndex++;
+                container.innerHTML += `<div class="question-box" id="exam-q-${idx}">
+                    <div class="q-badge">Câu ${idx + 1}</div>
+                    <div style="font-weight: 600; font-size: 16px;">${q.q}</div>
+                    <div style="margin-top: 18px;">
+                        ${q.statements.map((st, i) => `
+                            <div class="tf-row">
+                                <span>${String.fromCharCode(97 + i)}) ${st}</span>
+                                <div class="tf-options">
+                                    <label><input type="radio" name="tf-${idx}-${i}" onchange="saveExamTF(${idx}, ${i}, true)"> Đúng</label>
+                                    <label><input type="radio" name="tf-${idx}-${i}" onchange="saveExamTF(${idx}, ${i}, false)"> Sai</label>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>`;
+                nav.innerHTML += `<button class="q-nav-btn" id="nav-btn-${idx}" onclick="scrollToQuestion(${idx})">${idx + 1}</button>`;
+            });
+
+            // PHẦN III: 6 câu trả lời ngắn
+            container.innerHTML += `<div class="exam-part-header"><span class="num">PHẦN III</span> Trắc nghiệm trả lời ngắn <span class="num">6 câu</span></div>`;
+            data.part3.forEach((q) => {
+                const idx = qIndex++;
+                container.innerHTML += `<div class="question-box" id="exam-q-${idx}">
+                    <div class="q-badge">Câu ${idx + 1}</div>
+                    <div style="font-weight: 600; font-size: 16px;">${q.q}</div>
+                    <input type="text" class="short-input" placeholder="Nhập đáp án..." oninput="saveExamShort(${idx}, this.value)">
+                </div>`;
+                nav.innerHTML += `<button class="q-nav-btn" id="nav-btn-${idx}" onclick="scrollToQuestion(${idx})">${idx + 1}</button>`;
+            });
+
+            renderMath();
+            startTimer(90 * 60);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function saveExamMCQ(qIdx, optIdx, btn) {
+            const parent = btn.parentElement;
+            Array.from(parent.children).forEach(c => c.classList.remove('selected'));
+            btn.classList.add('selected');
+            examAnswers[qIdx] = { type: 'mcq', value: optIdx };
+            document.getElementById(`nav-btn-${qIdx}`).classList.add('answered');
+        }
+
+        function saveExamTF(qIdx, subIdx, val) {
+            if (!examAnswers[qIdx]) examAnswers[qIdx] = { type: 'tf', value: [] };
+            examAnswers[qIdx].value[subIdx] = val;
+            const ans = examAnswers[qIdx].value;
+            const answeredCount = ans.filter(v => v !== undefined).length;
+            const navBtn = document.getElementById(`nav-btn-${qIdx}`);
+            if (answeredCount > 0) navBtn.classList.add('answered');
+        }
+
+        function saveExamShort(qIdx, val) {
+            examAnswers[qIdx] = { type: 'short', value: val };
+            const navBtn = document.getElementById(`nav-btn-${qIdx}`);
+            if (val.trim() !== '') navBtn.classList.add('answered');
+            else navBtn.classList.remove('answered');
+        }
+
+        function scrollToQuestion(idx) {
+            document.getElementById(`exam-q-${idx}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            const timerEl = document.getElementById('exam-timer');
+            timerEl.classList.remove('warning');
+            timerEl.textContent = `${Math.floor(seconds/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;
+            timerInterval = setInterval(() => {
+                seconds--;
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                timerEl.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                if (seconds <= 300 && seconds > 0) timerEl.classList.add('warning');
+                if (seconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerEl.textContent = '00:00';
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        function normalizeShort(s) {
+            return (s || '').toString().trim().toLowerCase().replace(/\s+/g, '').replace(/,/g, ';');
+        }
+
+        function submitExam() {
+            clearInterval(timerInterval);
+            const data = examData[currentExamGroup];
+            let p1Correct = 0, p2FullCount = 0, p3Correct = 0;
+            let p1Score = 0, p2Score = 0, p3Score = 0;
+
+            data.part1.forEach((q, i) => {
+                const ans = examAnswers[i];
+                if (ans && ans.type === 'mcq' && ans.value === q.answer) {
+                    p1Correct++;
+                    p1Score += 0.25;
+                }
+            });
+
+            data.part2.forEach((q, i) => {
+                const idx = 12 + i;
+                const ans = examAnswers[idx];
+                if (ans && ans.type === 'tf') {
+                    let correctSubs = 0;
+                    q.answers.forEach((a, j) => {
+                        if (ans.value[j] === a) correctSubs++;
+                    });
+                    if (correctSubs === 4) { p2Score += 1.0; p2FullCount++; }
+                    else if (correctSubs === 3) p2Score += 0.5;
+                    else if (correctSubs === 2) p2Score += 0.25;
+                    else if (correctSubs === 1) p2Score += 0.1;
+                }
+            });
+
+            data.part3.forEach((q, i) => {
+                const idx = 16 + i;
+                const ans = examAnswers[idx];
+                if (ans && ans.type === 'short') {
+                    if (normalizeShort(ans.value) === normalizeShort(q.answer)) {
+                        p3Correct++;
+                        p3Score += 0.5;
+                    }
+                }
+            });
+
+            const total = p1Score + p2Score + p3Score;
+            showExamResult({ p1Correct, p1Score, p2FullCount, p2Score, p3Correct, p3Score, total });
+        }
+
+        function showExamResult(r) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.72);z-index:2000;display:flex;justify-content:center;align-items:center;backdrop-filter:blur(6px);padding:20px;';
+            const grade = r.total >= 8 ? 'Xuất sắc! 🏆' : r.total >= 6.5 ? 'Khá tốt! 👍' : r.total >= 5 ? 'Trung bình — cần cố thêm 💪' : 'Cần ôn luyện thêm 📚';
+            const gradeColor = r.total >= 8 ? '#10b981' : r.total >= 6.5 ? '#6366f1' : r.total >= 5 ? '#f59e0b' : '#ef4444';
+            overlay.innerHTML = `
+                <div style="background:white;padding:36px;border-radius:20px;max-width:620px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,0.25);text-align:center;max-height:90vh;overflow-y:auto;">
+                    <h2 style="font-size:26px;margin-bottom:6px;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Kết Quả Bài Thi</h2>
+                    <p style="color:#64748b;font-size:14px;margin-bottom:12px;">Đề số ${currentExamGroup + 1}</p>
+                    <div style="font-size:72px;font-weight:900;color:${gradeColor};line-height:1;margin:12px 0;">${r.total.toFixed(2)}<span style="font-size:28px;color:#94a3b8;">/10</span></div>
+                    <p style="font-size:17px;font-weight:700;color:${gradeColor};margin-bottom:22px;">${grade}</p>
+                    <div style="text-align:left;padding:18px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed #cbd5e1;">
+                            <span>📘 Phần I — Trắc nghiệm (12 câu)</span>
+                            <strong>${r.p1Correct}/12 — ${r.p1Score.toFixed(2)} đ</strong>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px dashed #cbd5e1;">
+                            <span>📗 Phần II — Đúng/Sai (4 câu)</span>
+                            <strong>${r.p2FullCount}/4 — ${r.p2Score.toFixed(2)} đ</strong>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+                            <span>📙 Phần III — Trả lời ngắn (6 câu)</span>
+                            <strong>${r.p3Correct}/6 — ${r.p3Score.toFixed(2)} đ</strong>
+                        </div>
+                    </div>
+                    <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                        <button id="btn-retry" style="padding:13px 28px;background:var(--gradient);color:white;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 4px 12px rgba(99,102,241,0.35);">🔄 Làm lại</button>
+                        <button id="btn-close" style="padding:13px 28px;background:#f1f5f9;color:#334155;border:1.5px solid #cbd5e1;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;">✖ Đóng</button>
+                    </div>
+                    <p style="font-size:12px;color:#94a3b8;margin-top:16px;">💡 Ghi chú: Phần II chấm bậc thang — 1 ý đúng 0.1đ, 2 ý 0.25đ, 3 ý 0.5đ, 4 ý 1đ.</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            overlay.querySelector('#btn-retry').onclick = () => { overlay.remove(); loadExam(currentExamGroup); };
+            overlay.querySelector('#btn-close').onclick = () => { overlay.remove(); };
+        }
+
+        window.onload = () => {
+            if (geminiApiKey) document.getElementById('apiKeyInput').value = geminiApiKey;
+            loadQuickQuiz(0);
+            loadExam(0);
+        };
+    </script>
+</body>
+</html>
